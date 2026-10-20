@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const source=fs.readFileSync(new URL('./source.html',import.meta.url),'utf8');
+const core=fs.readFileSync(new URL('./core.js',import.meta.url),'utf8');
+const template=fs.readFileSync(new URL('./editor-template.html',import.meta.url),'utf8');
+const sha='f4dba967709af5d0c22dc304f32ff7bcdd425434';
+const html=template.replace('__BOOTSTRAP__',()=>JSON.stringify({source,sha}).replaceAll('<','\\u003c')).replace('/*__CORE__*/',()=>core);
+fs.writeFileSync(new URL('./Buckeye-Studio-Preview.html',import.meta.url),html);
+const worker=fs.readFileSync(new URL('./worker-template.mjs',import.meta.url),'utf8').replace('__EDITOR_HTML__',()=>JSON.stringify(html));
+fs.writeFileSync(new URL('./worker.mjs',import.meta.url),worker);
+console.log('Built local editor preview and Cloudflare Worker.');
