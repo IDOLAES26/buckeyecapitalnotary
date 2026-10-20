@@ -6,7 +6,7 @@ function applyStage(){
  stageScale=chosen==='fit'?Math.max(.1,Math.min(1,(area.clientWidth-48)/viewportWidth,(area.clientHeight-48)/viewportHeight)):Number(chosen);
  canvas.style.width=viewportWidth+'px';canvas.style.height=viewportHeight+'px';canvas.style.transform='scale('+stageScale+')';
  box.style.width=viewportWidth*stageScale+'px';box.style.height=viewportHeight*stageScale+'px';
- $('viewport-width').value=viewportWidth;$('viewport-height').value=viewportHeight;
+ if(document.activeElement!==$('viewport-width'))$('viewport-width').value=viewportWidth;if(document.activeElement!==$('viewport-height'))$('viewport-height').value=viewportHeight;
  $('zoom-readout').textContent=Math.round(stageScale*100)+'%';
  $('canvas-caption').textContent=screen()[0].toUpperCase()+screen().slice(1)+' · '+viewportWidth+' × '+viewportHeight+' CSS px';
  const match=[...$('device-preset').options].find(o=>o.value===viewportWidth+','+viewportHeight);$('device-preset').value=match?.value||'custom';
@@ -19,6 +19,7 @@ function setViewport(w,h){
 }
 $('viewport-width').onchange=()=>setViewport($('viewport-width').value,viewportHeight);
 $('viewport-height').onchange=()=>setViewport(viewportWidth,$('viewport-height').value);
+for(const id of ['viewport-width','viewport-height']){const input=$(id);let timer;input.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>setViewport($('viewport-width').value,$('viewport-height').value),600);};input.onblur=()=>{clearTimeout(timer);setViewport($('viewport-width').value,$('viewport-height').value);};input.onkeydown=e=>{if(e.key==='Enter'){clearTimeout(timer);setViewport($('viewport-width').value,$('viewport-height').value);input.blur();}};}
 $('device-preset').onchange=()=>{if($('device-preset').value!=='custom')setViewport(...$('device-preset').value.split(',').map(Number));};
 $('rotate-viewport').onclick=()=>setViewport(viewportHeight,viewportWidth);
 $('stage-zoom').onchange=applyStage;
