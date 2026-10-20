@@ -15,6 +15,7 @@ const id=heading.getAttribute('data-bcn-id');
 p.text.mobile[id]='Mobile first line\nMobile second line';p.styles.mobile[id]={'font-size':'23px'};
 assert.match(C.find(C.documentFor(p,'mobile'),id).textContent,/Mobile first/);
 assert.equal(C.find(C.documentFor(p,'desktop'),id).textContent,heading.textContent);
+assert.equal(C.normalizeStyle('font-size','24'),'24px');assert.equal(C.normalizeStyle('font-size','1.5rem'),'1.5rem');assert.equal(C.normalizeStyle('line-height','1.6'),'1.6');assert.match(C.styleRule(id,{'font-size':'24'}),/font-size:24px!important/);
 const html=C.exportHTML(p);assert(validatePublishedHTML(html,source));
 const reopened=C.newProject(html,'new-sha');
 assert.match(C.find(C.documentFor(reopened,'mobile'),id).textContent,/Mobile first/);

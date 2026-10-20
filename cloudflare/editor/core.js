@@ -10,8 +10,9 @@ function safeURL(value,image=false){if(value==='')return true;try{if(value.start
 function setText(el,text){el.replaceChildren();String(text).split('\n').forEach((line,i)=>{if(i)el.append(el.ownerDocument.createElement('br'));el.append(el.ownerDocument.createTextNode(line));});}
 function newProject(source,sourceSha=''){return {schema:1,source,sourceSha,text:{all:{},desktop:{},tablet:{},mobile:{},small:{}},styles:{all:{},desktop:{},tablet:{},mobile:{},small:{}},attrs:{},added:[],moves:[]};}
 const allowedStyles=new Set(['font-size','font-family','font-weight','line-height','letter-spacing','text-align','color','background-color','border-width','border-style','border-color','border-radius','padding','margin','width','height','min-height','max-width','display','translate','gap','box-shadow','opacity','object-fit','justify-content','align-items','grid-template-columns']);
+function normalizeStyle(key,value){const text=String(value).trim();return ['font-size','letter-spacing','width','height','min-height','max-width','gap','border-width','border-radius','padding','margin'].includes(key)&&/^-?(?:\d+\.?\d*|\.\d+)$/.test(text)?text+'px':text;}
 function cssValue(value){return String(value).length<300&&!/[{}<>;]|url\s*\(|expression\s*\(|@import/i.test(value);}
-function styleRule(id,values){if(!/^[ea][a-zA-Z0-9_-]+$/.test(id))return '';const declarations=Object.entries(values).filter(([k,v])=>allowedStyles.has(k)&&cssValue(v)).map(([k,v])=>k+':'+v+'!important').join(';');return declarations?'[data-bcn-id="'+id+'"]{'+declarations+'}':'';}
+function styleRule(id,values){if(!/^[ea][a-zA-Z0-9_-]+$/.test(id))return '';const declarations=Object.entries(values).filter(([k,v])=>allowedStyles.has(k)&&cssValue(v)).map(([k,v])=>k+':'+normalizeStyle(k,v)+'!important').join(';');return declarations?'[data-bcn-id="'+id+'"]{'+declarations+'}':'';}
 function css(project){return Object.entries(project.styles).map(([screen,items])=>{const rules=Object.entries(items).map(([id,v])=>styleRule(id,v)).join('');return screen==='all'?rules:SCREENS[screen]?'@media '+SCREENS[screen]+'{'+rules+'}':'';}).join('\n');}
 function structure(doc,project){
  for(const a of project.added){if(!/^a[a-zA-Z0-9_-]+$/.test(a.id)||find(doc,a.id))continue;const parent=find(doc,a.parent);if(!parent)continue;const el=doc.createElement(['p','h2','h3','a','img','hr','div'].includes(a.tag)?a.tag:'p');el.setAttribute('data-bcn-id',a.id);if(a.tag==='img'){if(safeURL(a.src,true))el.setAttribute('src',a.src);el.setAttribute('alt',a.alt||'');}else {setText(el,a.text||'');if(a.tag==='a'){el.className='button';el.setAttribute('href',safeURL(a.href||'#')?a.href||'#':'#');}}const sibling=find(doc,a.after);if(sibling&&sibling.parentElement===parent)sibling.after(el);else parent.append(el);}
@@ -33,5 +34,5 @@ function documentFor(project,screen,exporting=false){
  return doc;
 }
 function exportHTML(project){return '<!doctype html>\n'+documentFor(project,'desktop',true).documentElement.outerHTML;}
-root.BuckeyeEditorCore={SCREENS,PROTECTED,newProject,tag,find,textEditable,safeURL,setText,css,documentFor,exportHTML,styleRule};
+root.BuckeyeEditorCore={SCREENS,PROTECTED,newProject,tag,find,textEditable,safeURL,setText,css,documentFor,exportHTML,styleRule,normalizeStyle};
 })(globalThis);
