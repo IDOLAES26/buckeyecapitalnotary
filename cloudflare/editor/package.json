@@ -1,1 +1,12 @@
-{"name":"buckeye-studio","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node test.mjs"},"devDependencies":{"linkedom":"0.18.12"}}
+{
+  "name": "buckeye-studio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test.mjs && node editor-tools.test.mjs"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.12"
+  }
+}

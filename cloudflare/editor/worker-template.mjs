@@ -37,6 +37,7 @@ export function validatePublishedHTML(html,original){
  if(JSON.stringify(scripts(html))!==JSON.stringify(scripts(original)))throw Object.assign(Error('Publishing stopped: the website scripts changed. Export for a code review instead.'),{status:400});
  if(!protectedForm(original)||protectedForm(html)!==protectedForm(original))throw Object.assign(Error('Publishing stopped: the appointment form connection or fields changed.'),{status:400});
  const required=['inquiry','service','document-type','find-meetings','meeting-results','selected-place-id','meeting-location','fee-estimator','calculate-fees','fee-result','wizard-progress','wizard-next','wizard-back'];
+ for(const match of scripts(original).join(' ').matchAll(/getElementById\(['"]([^'"]+)['"]\)/g)){if(!required.includes(match[1]))required.push(match[1]);}
  for(const id of required){const token=new RegExp('\\bid=["\']'+id+'["\']','g');if((html.match(token)||[]).length!==1)throw Object.assign(Error('Publishing stopped: a required element is missing or duplicated: '+id),{status:400});}
  return true;
 }
