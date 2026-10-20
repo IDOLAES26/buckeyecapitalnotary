@@ -5,6 +5,7 @@ const PROTECTED='input,select,textarea,form,script,style,[id],.wizard-page,.form
 function elements(doc){return [...doc.body.querySelectorAll('*')].filter(el=>!el.closest('script,style,noscript')&&!['BR','OPTION'].includes(el.tagName));}
 function tag(doc){const used=new Set(elements(doc).map(el=>el.getAttribute('data-bcn-id')).filter(Boolean));let i=0;elements(doc).filter(el=>!el.hasAttribute('data-bcn-copy')).forEach(el=>{if(el.hasAttribute('data-bcn-id'))return;while(used.has('e'+i))i++;el.setAttribute('data-bcn-id','e'+i);used.add('e'+i++);});return doc;}
 function find(doc,id){return [...doc.querySelectorAll('[data-bcn-id]')].find(el=>el.getAttribute('data-bcn-id')===id);}
+function selectionRoots(doc,ids){const els=[...ids].map(id=>find(doc,id)).filter(Boolean);return els.filter(el=>!els.some(other=>other!==el&&other.contains(el)));}
 function textEditable(el){return !!el&&!el.matches('input,textarea,select,form,svg,img,video,iframe')&&![...el.children].some(c=>!['BR','EM','STRONG','SMALL','SPAN','B','I','U'].includes(c.tagName))&&!el.querySelector('input,select,textarea,button,a,[id]');}
 function safeURL(value,image=false){if(value==='')return true;try{if(value.startsWith('#'))return !image;const u=new URL(value);return image?u.protocol==='https:'||/^data:image\/(png|jpeg|webp|gif);base64,/i.test(value):['https:','http:','mailto:','tel:'].includes(u.protocol);}catch{return false;}}
 function setText(el,text){el.replaceChildren();String(text).split('\n').forEach((line,i)=>{if(i)el.append(el.ownerDocument.createElement('br'));el.append(el.ownerDocument.createTextNode(line));});}
@@ -34,5 +35,5 @@ function documentFor(project,screen,exporting=false){
  return doc;
 }
 function exportHTML(project){return '<!doctype html>\n'+documentFor(project,'desktop',true).documentElement.outerHTML;}
-root.BuckeyeEditorCore={SCREENS,PROTECTED,newProject,tag,find,textEditable,safeURL,setText,css,documentFor,exportHTML,styleRule,normalizeStyle};
+root.BuckeyeEditorCore={SCREENS,PROTECTED,newProject,tag,find,textEditable,safeURL,setText,css,documentFor,exportHTML,styleRule,normalizeStyle,selectionRoots};
 })(globalThis);

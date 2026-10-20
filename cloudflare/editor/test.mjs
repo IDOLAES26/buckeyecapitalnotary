@@ -57,18 +57,25 @@ const ed=new DOMParser().parseFromString(editor,'text/html');
 for(const script of ed.querySelectorAll('script:not([type="application/json"])'))new vm.Script(script.textContent);
 const template=fs.readFileSync(new URL('./editor-template.html',import.meta.url),'utf8');
 const canvasDoc=new DOMParser().parseFromString('<html><head></head><body><p data-bcn-id="e1">Original text</p></body></html>','text/html');
-const para=canvasDoc.querySelector('p'),canvasProject=C.newProject('<html></html>');let remembered=0;const applied=[];para.getBoundingClientRect=()=>({left:20,top:100});canvasDoc.defaultView.getComputedStyle=()=>({fontSize:'16px'});const design=canvasDoc.createElement('style');design.id='bcn-editor-design';canvasDoc.head.append(design);
-const controls={text:{value:''},'drag-mode':{checked:false}};
-const context={C,frame:{},selectedId:'e1',editing:true,project:canvasProject,scope:()=> 'mobile',selected:()=>para,select:()=>{},status:()=>{},remember:()=>{remembered++;},markDirty:()=>{},$:id=>controls[id],setStyle:(key,value)=>applied.push([key,C.normalizeStyle(key,value)])};
-vm.createContext(context);vm.runInContext(template.slice(template.indexOf('function wireCanvas(doc){'),template.indexOf('function select(id,scroll=false){'))+';globalThis.attach=wireCanvas;',context);context.attach(canvasDoc);
+const para=canvasDoc.querySelector('p'),canvasProject=C.newProject('<html></html>');let remembered=0;const applied=[];para.getBoundingClientRect=()=>({left:20,top:100,right:220,bottom:200,width:200,height:100});canvasDoc.defaultView.getComputedStyle=()=>({fontSize:'16px'});const design=canvasDoc.createElement('style');design.id='bcn-editor-design';canvasDoc.head.append(design);
+const controls={text:{value:''},'drag-mode':{checked:false},'multi-mode':{checked:false}};
+const context={C,frame:{},selectedId:'e1',selectedIds:new Set(['e1']),editing:true,project:canvasProject,scope:()=> 'mobile',selected:()=>para,select:()=>{},status:()=>{},remember:()=>{remembered++;},markDirty:()=>{},$:id=>controls[id],setStyle:(key,value)=>applied.push([key,C.normalizeStyle(key,value)])};
+vm.createContext(context);vm.runInContext(template.slice(template.indexOf('function wireCanvas(doc){'),template.indexOf('function select(id,scroll=false,additive=false){'))+';globalThis.attach=wireCanvas;',context);context.attach(canvasDoc);
 para.dispatchEvent(new canvasDoc.defaultView.Event('dblclick',{bubbles:true,cancelable:true}));assert.equal(para.getAttribute('contenteditable'),'plaintext-only');
 para.textContent='Edited on canvas';para.dispatchEvent(new canvasDoc.defaultView.Event('input',{bubbles:true}));assert.equal(canvasProject.text.mobile.e1,'Edited on canvas');assert.equal(remembered,1);
 para.dispatchEvent(new canvasDoc.defaultView.Event('focusout',{bubbles:true}));assert.equal(para.hasAttribute('contenteditable'),false);assert.equal(canvasProject.text.desktop.e1,undefined);
 const sizeInput=canvasDoc.querySelector('#bcn-tools input[type=number]');sizeInput.value='28';sizeInput.onchange();assert.deepEqual(applied[0],['font-size','28px']);
 assert(!C.exportHTML(canvasProject).includes('contenteditable'));
 controls['drag-mode'].checked=true;
-function pointer(type,x,y){const e=new canvasDoc.defaultView.Event(type,{bubbles:true,cancelable:true});Object.assign(e,{clientX:x,clientY:y,button:0,pointerId:1});para.dispatchEvent(e);}
+function pointer(type,x,y,target=para){const e=new canvasDoc.defaultView.Event(type,{bubbles:true,cancelable:true});Object.assign(e,{clientX:x,clientY:y,button:0,pointerId:1});target.dispatchEvent(e);}
 pointer('pointerdown',10,20);pointer('pointermove',30,50);pointer('pointerup',30,50);
 assert.equal(canvasProject.styles.mobile.e1.translate,'20px 30px');assert.equal(canvasProject.styles.desktop.e1,undefined);
+const second=canvasDoc.createElement('p');second.setAttribute('data-bcn-id','e2');second.textContent='Second';second.getBoundingClientRect=para.getBoundingClientRect;canvasDoc.body.append(second);context.selectedIds=new Set(['e1','e2']);
+pointer('pointerdown',10,20);pointer('pointermove',15,30);pointer('pointerup',15,30);
+assert.equal(canvasProject.styles.mobile.e1.translate,'25px 40px');assert.equal(canvasProject.styles.mobile.e2.translate,'5px 10px');
+const nested=canvasDoc.createElement('span');nested.setAttribute('data-bcn-id','e3');para.append(nested);assert.equal(C.selectionRoots(canvasDoc,['e1','e3']).length,1);
+context.selectedIds=new Set(['e1']);const resizeHandle=canvasDoc.getElementById('bcn-resize');pointer('pointerdown',0,0,resizeHandle);pointer('pointermove',50,80,resizeHandle);pointer('pointerup',50,80,resizeHandle);
+assert.equal(canvasProject.styles.mobile.e1.width,'250px');assert.equal(canvasProject.styles.mobile.e1.height,'180px');assert.equal(canvasProject.styles.desktop.e1,undefined);
 
-console.log('PASS: responsive text isolation, two export/reopen cycles, form/script preservation, unsafe CSS/URL rejection, fail-closed auth, signed JWT verification, expiry, email restriction, CSRF, disabled publishing, UI script syntax, draft storage roundtrip, stale publish rejection mocked GitHub publishing, direct canvas text editing and floating size controls.');
+
+console.log('PASS: responsive text isolation, two export/reopen cycles, form/script preservation, unsafe CSS/URL rejection, fail-closed auth, signed JWT verification, expiry, email restriction, CSRF, disabled publishing, UI script syntax, draft storage roundtrip, stale publish rejection mocked GitHub publishing, direct canvas text editing, floating size controls, group dragging, nested selection filtering and section resizing.');
